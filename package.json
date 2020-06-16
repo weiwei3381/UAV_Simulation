@@ -4,7 +4,7 @@
   "description": "2020年无人机项目重构版本",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "webpack-dev-server",
     "dev": "concurrently \"wait-on http://localhost:3001 && webpack-dev-server\" \"npm start\" "
   },
   "author": "",

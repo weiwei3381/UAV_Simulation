@@ -119,44 +119,53 @@ self.log = function () {
  *
  * @return {ZRender} ZRender实例
  */
-function ZRender(id, dom, params) {
-    var self = this;
+class ZRender {
+    constructor(id, dom, params){
+        this.id = id
+        this.dom = dom
+        this.params = params
+        const shapeLibrary = this.getShapeLibrary()
+        this.storage = new Storage(shapeLibrary);
+        this.painter = new Painter(this.dom, this.storage, shapeLibrary);
+        this.handler = new Handler(this.dom, this.storage, this.painter, shapeLibrary);
 
-    var shapeLibrary;
-
-    if (typeof params.shape == 'undefined') {
-        //默认图形库
-        shapeLibrary = shape;
-    } else {
-        //自定义图形库，私有化，实例独占
-        shapeLibrary = {};
-        for (var s in params.shape) {
-            shapeLibrary[s] = params.shape[s];
-        }
-        shapeLibrary.get = function (name) {
-            return shapeLibrary[name] || shape.get(name);
-        };
+        // 动画控制
+        this.animatingShapes = [];
+        const _this = this
+        this.animation = new Animation({
+            stage: {
+                update: function () {
+                    _this.update(_this.animatingShapes);
+                }
+            }
+        });
+        this.animation.start();
     }
 
-    var storage = new Storage(shapeLibrary);
-    var painter = new Painter(dom, storage, shapeLibrary);
-    var handler = new Handler(dom, storage, painter, shapeLibrary);
+    // 获得图形库
+    getShapeLibrary(){
+        let shapeLibrary = {};
 
-    // 动画控制
-    var animatingShapes = [];
-    var animation = new Animation({
-        stage: {
-            update: function () {
-                self.update(animatingShapes);
+        if (typeof this.params.shape == 'undefined') {
+            //默认图形库
+            shapeLibrary = shape;
+        } else {
+            //自定义图形库，私有化，实例独占
+            for (let s in this.params.shape) {
+                shapeLibrary[s] = this.params.shape[s];
             }
+            shapeLibrary.get = function (name) {
+                return shapeLibrary[name] || shape.get(name);
+            };
         }
-    });
-    animation.start();
+        return shapeLibrary
+    }
+
 
     /**
      * 获取实例唯一标识
      */
-    self.getId = function () {
+    getId() {
         return id;
     };
 
@@ -164,18 +173,18 @@ function ZRender(id, dom, params) {
      * 添加图形形状
      * @param {Object} shape 形状对象，可用属性全集，详见各shape
      */
-    self.addShape = function (shape) {
-        storage.add(shape);
-        return self;
+    addShape(shape) {
+        this.storage.add(shape);
+        return this;
     };
 
     /**
      * 删除图形形状
      * @param {string} shapeId 形状对象唯一标识
      */
-    self.delShape = function (shapeId) {
-        storage.del(shapeId);
-        return self;
+    delShape(shapeId) {
+        this.storage.del(shapeId);
+        return this;
     };
 
     /**
@@ -183,18 +192,18 @@ function ZRender(id, dom, params) {
      * @param {string} shapeId 形状对象唯一标识
      * @param {Object} shape 形状对象
      */
-    self.modShape = function (shapeId, shape) {
-        storage.mod(shapeId, shape);
-        return self;
+    modShape(shapeId, shape) {
+        this.storage.mod(shapeId, shape);
+        return this;
     };
 
     /**
      * 添加额外高亮层显示，仅提供添加方法，每次刷新后高亮层图形均被清空
      * @param {Object} shape 形状对象
      */
-    self.addHoverShape = function (shape) {
-        storage.addHover(shape);
-        return self;
+    addHoverShape(shape) {
+        this.storage.addHover(shape);
+        return this;
     };
 
     /**
@@ -202,18 +211,18 @@ function ZRender(id, dom, params) {
      * @param {Function} callback  渲染结束后回调函数
      * todo:增加缓动函数
      */
-    self.render = function (callback) {
-        painter.render(callback);
-        return self;
+    render(callback) {
+        this.painter.render(callback);
+        return this;
     };
 
     /**
      * 视图更新
      * @param {Function} callback  视图更新后回调函数
      */
-    self.refresh = function (callback) {
-        painter.refresh(callback);
-        return self;
+    refresh(callback) {
+        this.painter.refresh(callback);
+        return this;
     };
 
     /**
@@ -221,14 +230,14 @@ function ZRender(id, dom, params) {
      * @param {Array} shapeList 需要更新的图形元素列表
      * @param {Function} callback  视图更新后回调函数
      */
-    self.update = function (shapeList, callback) {
-        painter.update(shapeList, callback);
-        return self;
+    update(shapeList, callback) {
+        this.painter.update(shapeList, callback);
+        return this;
     };
 
-    self.resize = function () {
-        painter.resize();
-        return self;
+    resize() {
+        this.painter.resize();
+        return this;
     };
 
     /**
@@ -243,14 +252,14 @@ function ZRender(id, dom, params) {
      *   .done( function(){ console.log('Animation done')})
      *   .start()
      */
-    self.animate = function (shapeId, path, loop) {
-        var shape = storage.get(shapeId);
+    animate(shapeId, path, loop) {
+        const shape = this.storage.get(shapeId);
         if (shape) {
-            var target;
+            let target = undefined;
             if (path) {
-                var pathSplitted = path.split('.');
-                var prop = shape;
-                for (var i = 0, l = pathSplitted.length; i < l; i++) {
+                const pathSplitted = path.split('.');
+                let prop = shape;
+                for (let i = 0, l = pathSplitted.length; i < l; i++) {
                     if (!prop) {
                         continue;
                     }
@@ -263,12 +272,7 @@ function ZRender(id, dom, params) {
                 target = shape;
             }
             if (!target) {
-                zrender.log(
-                    'Property "'
-                    + path
-                    + '" is not existed in shape '
-                    + shapeId
-                );
+                zrender.log(`Property ${path} is not existed in shape ${shapeId}`);//
                 return;
             }
 
@@ -277,21 +281,21 @@ function ZRender(id, dom, params) {
                 shape.__aniCount = 0;
             }
             if (shape.__aniCount === 0) {
-                animatingShapes.push(shape);
+                this.animatingShapes.push(shape);
             }
             shape.__aniCount++;
-
-            return animation.animate(target, loop)
+            const _this = this
+            return this.animation.animate(target, loop)
                 .done(function () {
                     shape.__aniCount--;
                     if (shape.__aniCount === 0) {
                         // 从animatingShapes里移除
-                        var idx = util.indexOf(animatingShapes, shape);
-                        animatingShapes.splice(idx, 1);
+                        const idx = util.indexOf(_this.animatingShapes, shape);
+                        _this.animatingShapes.splice(idx, 1);
                     }
                 });
         } else {
-            zrender.log('Shape "' + shapeId + '" not existed');
+            zrender.log(`Shape ${shapeId} not existed`);
         }
     };
 
@@ -313,17 +317,17 @@ function ZRender(id, dom, params) {
      *     }
      * }
      */
-    self.showLoading = function (loadingOption) {
-        painter.showLoading(loadingOption);
-        return self;
+    showLoading(loadingOption) {
+        this.painter.showLoading(loadingOption);
+        return this;
     };
 
     /**
      * loading结束
      */
-    self.hideLoading = function () {
-        painter.hideLoading();
-        return self;
+    hideLoading() {
+        this.painter.hideLoading();
+        return this;
     };
 
     /**
@@ -331,35 +335,35 @@ function ZRender(id, dom, params) {
      * @param {string} [idPrefix] id前缀
      * @return {string} 不重复ID
      */
-    self.newShapeId = function (idPrefix) {
-        return storage.newShapeId(idPrefix);
+    newShapeId(idPrefix) {
+        return this.storage.newShapeId(idPrefix);
     };
 
     /**
      * 获取视图宽度
      */
-    self.getWidth = function () {
-        return painter.getWidth();
+    getWidth() {
+        return this.painter.getWidth();
     };
 
     /**
      * 获取视图高度
      */
-    self.getHeight = function () {
-        return painter.getHeight();
+    getHeight() {
+        return this.painter.getHeight();
     };
 
-    self.toDataURL = function (type, args) {
-        return painter.toDataURL(type, args);
+    toDataURL(type, args) {
+        return this.painter.toDataURL(type, args);
     };
     /**
      * 事件绑定
      * @param {string} eventName 事件名称
      * @param {Function} eventHandler 响应函数
      */
-    self.on = function (eventName, eventHandler) {
-        handler.on(eventName, eventHandler);
-        return self;
+    on(eventName, eventHandler) {
+        this.handler.on(eventName, eventHandler);
+        return this;
     };
 
     /**
@@ -367,39 +371,40 @@ function ZRender(id, dom, params) {
      * @param {string} eventName 事件名称
      * @param {Function} eventHandler 响应函数
      */
-    self.un = function (eventName, eventHandler) {
-        handler.un(eventName, eventHandler);
-        return self;
+    un(eventName, eventHandler) {
+        this.handler.un(eventName, eventHandler);
+        return this;
     };
 
     /**
      * 清除当前ZRender下所有类图的数据和显示，clear后MVC和已绑定事件均还存在在，ZRender可用
      */
-    self.clear = function () {
-        storage.del();
-        painter.clear();
-        return self;
+    clear() {
+        this.storage.del();
+        this.painter.clear();
+        return this;
     };
 
     /**
      * 释放当前ZR实例（删除包括dom，数据、显示和事件绑定），dispose后ZR不可用
      */
-    self.dispose = function () {
-        animation.stop();
-        animation = null;
-        animatingShapes = null;
+    dispose() {
+        this.animation.stop();
+        this.animation = null;
+        this.animatingShapes = null;
 
-        self.clear();
-        self = null;
+        this.clear();
+        // fixme 类方法中如何将实例置为空
+        // self = null;
 
-        storage.dispose();
-        storage = null;
+        this.storage.dispose();
+        this.storage = null;
 
-        painter.dispose();
-        painter = null;
+        this.painter.dispose();
+        this.painter = null;
 
-        handler.dispose();
-        handler = null;
+        this.handler.dispose();
+        this.handler = null;
 
         //释放后告诉全局删除对自己的索引，没想到啥好方法
         zrender.delInstance(id);

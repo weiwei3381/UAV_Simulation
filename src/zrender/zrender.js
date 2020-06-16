@@ -12,7 +12,6 @@ import eventTool from './tool/event'
 import Animation from './animation/animation'
 import util from './tool/util'
 import shape from './shape'
-import effect from './tool/loadingEffect'
 
 var self = {};
 var zrender = self;     // 提供MVC内部反向使用静态方法；
@@ -303,36 +302,7 @@ class ZRender {
         }
     };
 
-    /**
-     * loading显示
-     * @param  {Object} loadingOption 参数
-     * {
-     *     effect,
-     *     //loading话术
-     *     text:'',
-     *     // 水平安放位置，默认为 'center'，可指定x坐标
-     *     x:'center' || 'left' || 'right' || {number},
-     *     // 垂直安放位置，默认为'top'，可指定y坐标
-     *     y:'top' || 'bottom' || {number},
-     *
-     *     textStyle:{
-     *         textFont: 'normal 20px Arial' || {textFont}, //文本字体
-     *         color: {color}
-     *     }
-     * }
-     */
-    showLoading(loadingOption) {
-        this.painter.showLoading(loadingOption);
-        return this;
-    };
 
-    /**
-     * loading结束
-     */
-    hideLoading() {
-        this.painter.hideLoading();
-        return this;
-    };
 
     /**
      * 生成形状唯一ID
@@ -980,9 +950,6 @@ function Painter(root, storage, shape) {
      * @param {Function=} callback 绘画结束后的回调函数
      */
     function render(callback) {
-        if (isLoading()) {
-            hideLoading();
-        }
         //检查_maxZlevel是否变大，如是则同步创建需要的Canvas
         _syncMaxZlevelCanvase();
 
@@ -1103,55 +1070,6 @@ function Painter(root, storage, shape) {
         return self;
     }
 
-    /**
-     * 显示loading
-     * @param {Object} loadingOption 选项，内容见下
-     * @param {color} -.backgroundColor 背景颜色
-     * @param {Object} -.textStyle 文字样式，同shape/text.style
-     * @param {number=} -.progress 进度参数，部分特效有用
-     * @param {Object=} -.effectOption 特效参数，部分特效有用
-     * @param {string | function} -.effect 特效依赖tool/loadingEffect，
-     *                                     可传入自定义特效function
-     */
-    function showLoading(loadingOption) {
-
-        effect.stop(_loadingTimer);
-
-        loadingOption = loadingOption || {};
-        loadingOption.effect = loadingOption.effect
-            || config.loadingEffect;
-        loadingOption.canvasSize = {
-            width: _width,
-            height: _height
-        };
-
-        _loadingTimer = effect.start(
-            loadingOption,
-            storage.addHover,
-            refreshHover
-        );
-        self.loading = true;
-
-        return self;
-    }
-
-    /**
-     * loading结束
-     * 乱来的，待重写
-     */
-    function hideLoading() {
-        effect.stop(_loadingTimer);
-        clearHover();
-        self.loading = false;
-        return self;
-    }
-
-    /**
-     * loading结束判断
-     */
-    function isLoading() {
-        return self.loading;
-    }
 
     /**
      * 获取绘图区域宽度
@@ -1209,9 +1127,6 @@ function Painter(root, storage, shape) {
      * 释放
      */
     function dispose() {
-        if (isLoading()) {
-            hideLoading();
-        }
         root.innerHTML = '';
 
         root = null;
@@ -1290,9 +1205,6 @@ function Painter(root, storage, shape) {
     self.clear = clear;
     self.refreshHover = refreshHover;
     self.clearHover = clearHover;
-    self.showLoading = showLoading;
-    self.hideLoading = hideLoading;
-    self.isLoading = isLoading;
     self.getWidth = getWidth;
     self.getHeight = getHeight;
     self.resize = resize;
@@ -1415,9 +1327,6 @@ function Handler(root, storage, painter, shape) {
      * @param {event} event dom事件对象
      */
     function _mouseMoveHandler(event) {
-        if (painter.isLoading()) {
-            return;
-        }
         _event = _zrenderEventFixed(event);
         _lastX = _mouseX;
         _lastY = _mouseY;
@@ -1502,9 +1411,6 @@ function Handler(root, storage, painter, shape) {
         _outShapeHandler();
         _dropHandler();
         _dragEndHandler();
-        if (!painter.isLoading()) {
-            painter.refreshHover();
-        }
     }
 
     /**

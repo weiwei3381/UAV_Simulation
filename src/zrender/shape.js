@@ -26,46 +26,46 @@ import Trochoid from './shape/trochoid'
 import Rose from './shape/rose'
 
 
-var self = {};
+const shape = {};
 
-var _shapeLibrary = {};     //shape库
+const _shapeLibrary = {};     //shape库
 
 /**
  * 定义图形实现
  * @param {Object} name
  * @param {Object} clazz 图形实现
  */
-self.define = function (name, clazz) {
+shape.define = function (name, clazz) {
     _shapeLibrary[name] = clazz;
-    return self;
+    return shape;
 };
 
 /**
  * 获取图形实现
  * @param {Object} name
  */
-self.get = function (name) {
+shape.get = function (name) {
     return _shapeLibrary[name];
 };
 
 // 内置图形注册
-self.define('circle', new Circle());
-self.define('ellipse', new Ellipse());
-self.define('line', new Line());
-self.define('polygon', new Polygon());
-self.define('brokenLine', new BrokenLine());
-self.define('rectangle', new Rectangle());
-self.define('ring', new Ring());
-self.define('sector', new Sector());
-self.define('text', new Text());
-self.define('heart', new Heart());
-self.define('droplet', new Droplet());
-self.define('path', new Path());
-self.define('image', new ZImage());
-self.define('beziercurve', new Beziercurve());
-self.define('star', new Star());
-self.define('isogon', new Isogon());
-self.define('trochoid', new Trochoid());
-self.define('rose', new Rose());
+shape.define('circle', new Circle());
+shape.define('ellipse', new Ellipse());
+shape.define('line', new Line());
+shape.define('polygon', new Polygon());
+shape.define('brokenLine', new BrokenLine());
+shape.define('rectangle', new Rectangle());
+shape.define('ring', new Ring());
+shape.define('sector', new Sector());
+shape.define('text', new Text());
+shape.define('heart', new Heart());
+shape.define('droplet', new Droplet());
+shape.define('path', new Path());
+shape.define('image', new ZImage());
+shape.define('beziercurve', new Beziercurve());
+shape.define('star', new Star());
+shape.define('isogon', new Isogon());
+shape.define('trochoid', new Trochoid());
+shape.define('rose', new Rose());
 
-export default self
+export default shape

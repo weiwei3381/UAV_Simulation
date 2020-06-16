@@ -120,22 +120,26 @@ self.log = function () {
  * @return {ZRender} ZRender实例
  */
 class ZRender {
-    constructor(id, dom, params){
+    constructor(id, dom, params) {
         this.id = id
         this.dom = dom
-        this.params = params
-        const shapeLibrary = this.getShapeLibrary()
+        // 获得图形库
+        const shapeLibrary = this.getShapeLibrary(params)
         this.storage = new Storage(shapeLibrary);
         this.painter = new Painter(this.dom, this.storage, shapeLibrary);
         this.handler = new Handler(this.dom, this.storage, this.painter, shapeLibrary);
+        this.initAnimate()
 
-        // 动画控制
+    }
+
+    // 动画控制
+    initAnimate() {
         this.animatingShapes = [];
-        const _this = this
         this.animation = new Animation({
             stage: {
-                update: function () {
-                    _this.update(_this.animatingShapes);
+                // 必须使用箭头函数, 否则this绑定会出错
+                update: () => {
+                    this.update(this.animatingShapes);
                 }
             }
         });
@@ -143,16 +147,16 @@ class ZRender {
     }
 
     // 获得图形库
-    getShapeLibrary(){
+    getShapeLibrary(params) {
         let shapeLibrary = {};
 
-        if (typeof this.params.shape == 'undefined') {
+        if (typeof params.shape == 'undefined') {
             //默认图形库
             shapeLibrary = shape;
         } else {
             //自定义图形库，私有化，实例独占
-            for (let s in this.params.shape) {
-                shapeLibrary[s] = this.params.shape[s];
+            for (let s in params.shape) {
+                shapeLibrary[s] = params.shape[s];
             }
             shapeLibrary.get = function (name) {
                 return shapeLibrary[name] || shape.get(name);
@@ -356,6 +360,7 @@ class ZRender {
     toDataURL(type, args) {
         return this.painter.toDataURL(type, args);
     };
+
     /**
      * 事件绑定
      * @param {string} eventName 事件名称
@@ -449,6 +454,7 @@ function Storage(shape) {
      * e.style.__rect 区域矩阵缓存，修改后清空，重新计算一次
      */
     function _mark(e) {
+        // 如果形状可高亮/点击/拖拽等操作, 那么该形状就需要hover判断, 否则不需要
         if (e.hoverable || e.onclick || e.draggable
             || e.onmousemove || e.onmouseover || e.onmouseout
             || e.onmousedown || e.onmouseup
@@ -459,7 +465,7 @@ function Storage(shape) {
         } else {
             e.__silent = true;
         }
-
+        // 如果形状的位置/大小/旋转有一个有值,则需要转向
         if (Math.abs(e.rotation[0]) > 0.0001
             || Math.abs(e.position[0]) > 0.0001
             || Math.abs(e.position[1]) > 0.0001
@@ -470,18 +476,18 @@ function Storage(shape) {
         } else {
             e.__needTransform = false;
         }
-
+        // 设置默认的style属性
         e.style = e.style || {};
-        e.style.__rect = null;
+        e.style.__rect = null;  // 区域矩阵缓存，修改后清空，重新计算一次
     }
 
     /**
      * 添加
-     * @param {Object} params 参数
+     * @param {Object} params 形状参数
      */
     function add(params) {
-        //默认&必须的参数
-        var e = {
+        //默认&必须的参数, 这里不包括style值
+        const e = {
             'shape': 'circle',                      // 形状
             'id': params.id || self.newShapeId(),   // 唯一标识
             'zlevel': 0,                            // z轴位置
@@ -492,22 +498,26 @@ function Storage(shape) {
             'rotation': [0, 0, 0],
             'scale': [1, 1, 0, 0]
         };
-        util.merge(
-            e,
-            params,
-            {
+        // 合并之后的e就是混合了用户参数和默认参数的形状对象
+        util.merge(e, params, {
                 'overwrite': true,
                 'recursive': true
             }
         );
+        // 对形状增加一些标志位,包括"是否hover","是否transform"
+        // 并设置默认style属性,并清空style中的区域矩阵缓存
         _mark(e);
+        // 把形状id加入索引map
         _elements[e.id] = e;
+        // 所有形状的z轴方向排列
         _zElements[e.zlevel] = _zElements[e.zlevel] || [];
         _zElements[e.zlevel].push(e);
-
+        // 获得最大的Z轴方向
         _maxZlevel = Math.max(_maxZlevel, e.zlevel);
+        // 有数据改变的zlevel
         _changedZlevel[e.zlevel] = true;
 
+        // 返回的是Storage对象,方便链式调用继续增加对象
         return self;
     }
 

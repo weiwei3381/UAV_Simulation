@@ -178,14 +178,20 @@ function brush(ctx, e, isHighlight) {
     }
 
     ctx.save();
+    // 设置画布格式
     this.setContext(ctx, style);
 
-    // 设置transform
+    // 设置画布变换情况, 例如位置和放大缩小等, 使用矩阵进行运算
+    // ctx.transform(a, b, c, d, e, f)总共6个参数,其中
+    // a (m11)水平缩放。 b (m12)  垂直倾斜。c (m21) 水平倾斜。d (m22)垂直缩放。
+    // e (dx) 水平移动。f (dy) 垂直移动。
+    // 详情见: https://developer.mozilla.org/zh-CN/docs/Web/API/CanvasRenderingContext2D/transform
     if (e.__needTransform) {
         ctx.transform.apply(ctx, this.updateTransform(e));
     }
-
+    // 正儿八经开始绘图
     ctx.beginPath();
+    // 这里的this指的就是形状shape的实例, 一般是circle等对象,继承base方法
     this.buildPath(ctx, style);
     if (this.brushTypeOnly != 'stroke') {
         ctx.closePath();
@@ -423,6 +429,7 @@ function drawText(ctx, style, normalStyle) {
  * @param {Object} highlightStyle 高亮样式
  */
 function getHighlightStyle(style, highlightStyle, brushTypeOnly) {
+    // 将style复制一份到newStyle
     var newStyle = {};
     for (var k in style) {
         newStyle[k] = style[k];

@@ -23,8 +23,9 @@ var circle = {
     draggable: true,
 }
 zr.addShape(circle)
-for (let i = 0; i < 10; i++) {
-    zr.addShape({
+const shapeList = []
+for (let i = 0; i < 20; i++) {
+    shapeList[i] = {
         shape: 'circle',
         id: zr.newShapeId(),
         position: [600 * Math.random(), 400 * Math.random()],
@@ -39,13 +40,23 @@ for (let i = 0; i < 10; i++) {
             lineWidth: 5,
             text: `circle_${i}`,
             textPosition: 'inside',
-
         },
         draggable: true,
-    })
+    }
+    zr.addShape(shapeList[i])
 }
+//首次绘图，创建各种dom和context, 并且把图形刷画出来
 zr.render()
+// 通过修改属性值改变图像样式, 数据驱动
+setInterval(()=>{
+    const i = Math.floor(Math.random()*20)
+    shapeList[i].position = [600 * Math.random(), 400 * Math.random()]
+    zr.modShape(shapeList[i].id, shapeList[i]);
+    zr.refresh()
+},500)
 
+
+// 动画, .animate方法查找shapeId对象, path是改变里层属性, 例如style等
 zr.animate(circle.id, '')
     .when(1000, {
         position: [200, 0],
@@ -87,3 +98,4 @@ zr.animate(circle.id, 'style')
     .during(function (target) {
     })
     .start()
+

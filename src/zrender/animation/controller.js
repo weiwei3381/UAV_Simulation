@@ -13,7 +13,7 @@
 
 import Easing from './easing'
 
-var Controller = function (options) {
+const Controller = function (options) {
 
     this._targetPool = options.target || {};
     if (this._targetPool.constructor != Array) {
@@ -35,7 +35,7 @@ var Controller = function (options) {
         ? false : options.loop;
 
     this.gap = options.gap || 0;
-
+    // 缓动默认为线性
     this.easing = options.easing || 'Linear';
 
     this.onframe = options.onframe || null;
@@ -47,18 +47,20 @@ var Controller = function (options) {
 
 Controller.prototype = {
     step: function (time) {
-        var percent = (time - this._startTime) / this._life;
+        // 获得当前时间百分比
+        let percent = (time - this._startTime) / this._life;
 
-        //还没开始
+        //  百分比小于0表示还没开始
         if (percent < 0) {
             return;
         }
-
+        // 如果百分比大于1, 也最大也只能为1
         percent = Math.min(percent, 1);
-
+        // 缓动函数
         var easingFunc = typeof (this.easing) == 'string'
             ? Easing[this.easing]
             : this.easing;
+        // 计划当前位置, 从0-1开始算
         var schedule;
         if (typeof easingFunc === 'function') {
             schedule = easingFunc(percent);
@@ -90,6 +92,8 @@ Controller.prototype = {
         this._startTime = new Date().getTime() + this.gap;
     },
     fire: function (eventType, arg) {
+        // 虽然预留了接口,可以根据不同的事件类型进行判断
+        // 但是目前主要还是调用onframe函数,进行控制
         for (var i = 0, len = this._targetPool.length; i < len; i++) {
             if (this['on' + eventType]) {
                 this['on' + eventType](this._targetPool[i], arg);

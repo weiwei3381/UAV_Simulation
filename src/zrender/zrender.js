@@ -133,7 +133,9 @@ class ZRender {
 
     // 动画控制
     initAnimate() {
+        // 需要变动的形状集合
         this.animatingShapes = [];
+        // stage是绘制类, 需要提供update接口
         this.animation = new Animation({
             stage: {
                 // 必须使用箭头函数, 否则this绑定会出错
@@ -256,8 +258,10 @@ class ZRender {
      *   .start()
      */
     animate(shapeId, path, loop) {
+        // 获取形状
         const shape = this.storage.get(shapeId);
         if (shape) {
+            // 要变更的目标,默认是shape, path存在则给其他属性
             let target = undefined;
             if (path) {
                 const pathSplitted = path.split('.');
@@ -278,30 +282,31 @@ class ZRender {
                 zrender.log(`Property ${path} is not existed in shape ${shapeId}`);//
                 return;
             }
-
+            // 动态给图形增加__aniCount的属性, 表示动画数
             if (typeof (shape.__aniCount) === 'undefined') {
                 // 正在进行的动画记数
                 shape.__aniCount = 0;
             }
+            // 动画数为0则证明是刚开始, 则可以加入到需要变动的形状集合
             if (shape.__aniCount === 0) {
                 this.animatingShapes.push(shape);
             }
+            // 动画数加1
             shape.__aniCount++;
-            const _this = this
+            // target是图形, loop是是否循环
             return this.animation.animate(target, loop)
-                .done(function () {
+                .done(()=> {
                     shape.__aniCount--;
                     if (shape.__aniCount === 0) {
                         // 从animatingShapes里移除
-                        const idx = util.indexOf(_this.animatingShapes, shape);
-                        _this.animatingShapes.splice(idx, 1);
+                        const idx = util.indexOf(this.animatingShapes, shape);
+                        this.animatingShapes.splice(idx, 1);
                     }
                 });
         } else {
             zrender.log(`Shape ${shapeId} not existed`);
         }
     };
-
 
 
     /**
@@ -750,9 +755,9 @@ function Painter(root, storage, shape) {
 
     var _maxZlevel = 0;             //最大zlevel，缓存记录
     var _loadingTimer;
-
+    // 根dom节点
     var _domRoot = document.createElement('div');
-    // 避免页面选中的尴尬
+    // 避免页面选中的尴尬, 不然根dom节点被选中
     _domRoot.onselectstart = function () {
         return false;
     };
@@ -879,7 +884,7 @@ function Painter(root, storage, shape) {
     }
 
     /**
-     * 刷画图形
+     * 刷画图形, 返回的是一个函数, 这个函数会被迭代器调用
      * @param {Object} changedZlevel 需要更新的zlevel索引
      */
     function _brush(changedZlevel) {
@@ -899,11 +904,7 @@ function Painter(root, storage, shape) {
                                     ctx, e, false, update
                                 );
                             } catch (error) {
-                                zrender.log(
-                                    error,
-                                    'brush error of ' + e.shape,
-                                    e
-                                );
+                                zrender.log(error, 'brush error of ' + e.shape, e);
                             }
                         } else {
                             var currentShape = shape.get(e.shape)
@@ -955,11 +956,12 @@ function Painter(root, storage, shape) {
 
         //升序遍历，shape上的zlevel指定绘画图层的z轴层叠
         storage.iterShape(
+            // 把储存里面的形状全部刷画下来
             _brush({all: true}),
             {normal: 'up'}
         );
 
-        //update到最新则清空标志位
+        //update到最新则清空标志位, 把有数据改变的zLevel层清空掉
         storage.clearChangedZlevel();
 
         if (typeof callback == 'function') {

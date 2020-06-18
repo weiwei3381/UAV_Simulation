@@ -16,7 +16,23 @@
 import Controller from './controller'
 import util from '../tool/util'
 
-var requrestAnimationFrame = window.requrestAnimationFrame
+var Animation = function (options) {
+
+    options = options || {};
+    //  stage(optional) 绘制类, 需要提供update接口
+    this.stage = options.stage || {};
+    // 每次动画运行完的回调函数
+    this.onframe = options.onframe || function () {
+    };
+
+    // 私有属性
+    this._controllerPool = [];
+
+    this._running = false;
+};
+
+// 帧数默认为60帧, 需传入回调函数,保证每秒执行60次
+const requrestAnimationFrame = window.requrestAnimationFrame
     || window.mozRequestAnimationFrame
     || window.webkitRequestAnimationFrame
     || function (callback) {
@@ -24,21 +40,6 @@ var requrestAnimationFrame = window.requrestAnimationFrame
             callback, 1000 / 60
         );
     };
-
-var Animation = function (options) {
-
-    options = options || {};
-
-    this.stage = options.stage || {};
-
-    this.onframe = options.onframe || function () {
-    };
-
-    // private properties
-    this._controllerPool = [];
-
-    this._running = false;
-};
 
 Animation.prototype = {
     add: function (controller) {
@@ -50,32 +51,35 @@ Animation.prototype = {
             this._controllerPool.splice(idx, 1);
         }
     },
+    // 动画更新函数, 每隔16ms运行一次
     update: function () {
-        var time = new Date().getTime();
-        var cp = this._controllerPool;
-        var len = cp.length;
+        // 记录开始时间
+        const time = new Date().getTime();
+        // 控制池
+        const cp = this._controllerPool;
+        // 控制池大小
+        let len = cp.length;
 
-        var deferredEvents = [];
-        var deferredCtls = [];
-        for (var i = 0; i < len; i++) {
-            var controller = cp[i];
-            var e = controller.step(time);
+        const deferredEvents = [];
+        const deferredCtls = [];
+        for (let i = 0; i < len; i++) {
+            const controller = cp[i];
+            // 根据当前时间获得控制器
+            const e = controller.step(time);
             // 需要在stage.update之后调用的事件，例如destroy
             if (e) {
                 deferredEvents.push(e);
                 deferredCtls.push(controller);
             }
         }
-        if (this.stage
-            && this.stage.update
-            && this._controllerPool.length
+        if (this.stage && this.stage.update && this._controllerPool.length
         ) {
             this.stage.update();
         }
 
         // 删除动画完成的控制器
-        var newArray = [];
-        for (var i = 0; i < len; i++) {
+        const newArray = [];
+        for (let i = 0; i < len; i++) {
             if (!cp[i]._needsRemove) {
                 newArray.push(cp[i]);
                 cp[i]._needsRemove = false;
@@ -87,18 +91,19 @@ Animation.prototype = {
         for (var i = 0; i < len; i++) {
             deferredCtls[i].fire(deferredEvents[i]);
         }
-
+        // 每次动画运行完的回调
         this.onframe();
 
     },
-    // 启用start函数之后每个1000/fps事件就会刷新
+    // 启用start函数之后每隔1000/60毫秒(fps默认为60)事件就会刷新
     // 也可以不使用animation的start函数
     // 手动每一帧去调用update函数更新状态
     start: function () {
         var self = this;
-
+        // 开始运行设置为true, 修改animation的_running可以停止
         this._running = true;
-
+        // 下述方法只能保证每一帧运行完之后,间隔1000/60毫秒执行下一次,
+        // 但是由于运行update()也需要时间, 所以并不能保证最后结果是60帧
         function step() {
             if (self._running) {
                 self.update();
@@ -108,12 +113,14 @@ Animation.prototype = {
 
         requrestAnimationFrame(step);
     },
+    // 停止运行动画
     stop: function () {
         this._running = false;
     },
     clear: function () {
         this._controllerPool = [];
     },
+    // target是目标图形(shape或者属性), loop表示是否循环
     animate: function (target, loop, getter, setter) {
         var deferred = new Deferred(target, loop, getter, setter);
         deferred.animation = this;
@@ -122,10 +129,12 @@ Animation.prototype = {
 };
 Animation.prototype.constructor = Animation;
 
+// 默认从target上读属性的函数
 function _defaultGetter(target, key) {
     return target[key];
 }
 
+// 默认从target上写属性的函数
 function _defaultSetter(target, key, value) {
     target[key] = value;
 }
@@ -142,10 +151,8 @@ function _interpolate(
     setter
 ) {
     // 遍历数组做插值
-    if (prevValue instanceof Array
-        && nextValue instanceof Array
-    ) {
-        var minLen = Math.min(prevValue.length, nextValue.length);
+    if (prevValue instanceof Array && nextValue instanceof Array) {
+        const minLen = Math.min(prevValue.length, nextValue.length);
         var largerArray;
         var maxLen;
         var result = [];
@@ -186,17 +193,26 @@ function _interpolate(
     }
 }
 
+/**
+ * 动画延后展示的类
+ * @param target : 某个目标的属性, 一般是shape对象或者style属性
+ * @param loop : 是否循环
+ * @param getter : 默认从target上取属性的函数
+ * @param setter : 默认从target上写属性的函数
+ */
 function Deferred(target, loop, getter, setter) {
+    // 记录类, 记录各个属性情况
     this._tracks = {};
+    // 目标是需要shape对象或者style属性
     this._target = target;
-
+    // 默认不进行循环
     this._loop = loop || false;
-
+    // getter和setter的默认值
     this._getter = getter || _defaultGetter;
     this._setter = setter || _defaultSetter;
-
+    // 当前控制器数量
     this._controllerCount = 0;
-
+    // 已经完成的控制器数量
     this._doneList = [];
 
     this._onframeList = [];
@@ -205,11 +221,12 @@ function Deferred(target, loop, getter, setter) {
 }
 
 Deferred.prototype = {
+    // 使用when方法设置帧
     when: function (time /* ms */, props, easing) {
         for (var propName in props) {
             if (!this._tracks[propName]) {
                 this._tracks[propName] = [];
-                // 初始状态
+                // 初始状态, 并没有easing(缓动)属性
                 this._tracks[propName].push({
                     time: 0,
                     value: this._getter(this._target, propName)
@@ -267,7 +284,9 @@ Deferred.prototype = {
         for (var propName in this._tracks) {
             delay = 0;
             track = this._tracks[propName];
+            // 获得的track是数组, 所以需要判断数组情况
             if (track.length) {
+                // 获得最大时间, 不过这里只考虑用户按时间大小插入, 不考虑非线性情况
                 trackMaxTime = track[track.length - 1].time;
             } else {
                 continue;
@@ -281,6 +300,8 @@ Deferred.prototype = {
                     life: next.time - now.time,
                     delay: delay,
                     loop: self._loop,
+                    // gap是循环的间隔时间,也就是loop如果为真的话,这一段下次多久开始
+                    // 用整个这段时间 - 这个控制器用时, 就是等待时间
                     gap: trackMaxTime - (next.time - now.time),
                     easing: next.easing,
                     onframe: createOnframe(now, next, propName),

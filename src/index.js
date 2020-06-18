@@ -1,4 +1,4 @@
-import zrender from './zrender/zrender'
+import zrender from './zrender/'
 import zrColor from './zrender/tool/color'
 
 // 初始化zrender

@@ -22,8 +22,6 @@ import ZImage from './shape/image'
 import Beziercurve from './shape/beziercurve'
 import Star from './shape/star'
 import Isogon from './shape/isogon'
-import Trochoid from './shape/trochoid'
-import Rose from './shape/rose'
 
 
 const shape = {};
@@ -65,7 +63,5 @@ shape.define('image', new ZImage());
 shape.define('beziercurve', new Beziercurve());
 shape.define('star', new Star());
 shape.define('isogon', new Isogon());
-shape.define('trochoid', new Trochoid());
-shape.define('rose', new Rose());
 
 export default shape

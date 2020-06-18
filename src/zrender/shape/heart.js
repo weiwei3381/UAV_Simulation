@@ -74,7 +74,6 @@
    }
  */
 import base from './base'
-import shape from '../shape'
 
 function Heart() {
     this.type = 'heart';

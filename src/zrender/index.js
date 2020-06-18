@@ -8,10 +8,10 @@
  */
 import ZRender from './ZRender'
 
-var zrender = {};  // 提供MVC内部反向使用静态方法；
+const zrender = {};  // 提供MVC内部反向使用静态方法；
 
-var _idx = 0;           //ZRender instance's id
-var _instances = {};    //ZRender实例map索引
+let _idx = 0;           //ZRender instance's id
+let _instances = {};    //ZRender实例map索引
 
 /**
  * zrender初始化

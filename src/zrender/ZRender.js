@@ -27,7 +27,6 @@ export default class ZRender {
         this.painter = new Painter(this.dom, this.storage, shapeLibrary);
         this.handler = new Handler(this.dom, this.storage, this.painter, shapeLibrary);
         this.initAnimate()
-
     }
 
     // 动画控制

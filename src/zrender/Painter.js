@@ -10,14 +10,13 @@ import {logger} from './logger'
  */
 export default function Painter(root, storage, shape) {
     var self = this;
-
-    const {catchBrushException}  = config
+    // 获取配置项
+    const {catchBrushException} = config
 
     var _domList = {};              //canvas dom元素
     var _ctxList = {};              //canvas 2D context对象，与domList对应
 
     var _maxZlevel = 0;             //最大zlevel，缓存记录
-    var _loadingTimer;
     // 根dom节点
     var _domRoot = document.createElement('div');
     // 避免页面选中的尴尬, 不然根dom节点被选中
@@ -51,7 +50,17 @@ export default function Painter(root, storage, shape) {
             - stl.paddingBottom.replace(/\D/g, '');
     }
 
+    /**
+     * 私有方法
+     * painter的初始化方法,
+     *
+     * 根据storage存储的最大zlevel创建canvas,
+     * 初始形成根节点domRoot, dom节点列表domList和绘图ctx列表ctxList,
+     * 说是列表, 但是都是用object对象实现的, 马上会调用初始化方法
+     * @private
+     */
     function _init() {
+        // 初始化根节点
         _domRoot.innerHTML = '';
         root.innerHTML = '';
 
@@ -71,12 +80,12 @@ export default function Painter(root, storage, shape) {
 
         _maxZlevel = storage.getMaxZlevel();
 
-        //创建各层canvas
-        //背景
+        //  创建各层canvas
+        //  创建背景div, 由于不是canvas, 不需要用canvasManager初始化
         _domList['bg'] = _createDom('bg', 'div');
         _domRoot.appendChild(_domList['bg']);
 
-        //实体
+        //  创建实体canvas
         for (var i = 0; i <= _maxZlevel; i++) {
             _domList[i] = _createDom(i, 'canvas');
             _domRoot.appendChild(_domList[i]);
@@ -89,7 +98,7 @@ export default function Painter(root, storage, shape) {
             && _ctxList[i].scale(_devicePixelRatio, _devicePixelRatio);
         }
 
-        //高亮
+        // 创建高亮层canvas
         _domList['hover'] = _createDom('hover', 'canvas');
         _domList['hover'].id = '_zrender_hover_';
         _domRoot.appendChild(_domList['hover']);
@@ -98,10 +107,8 @@ export default function Painter(root, storage, shape) {
         }
         _ctxList['hover'] = _domList['hover'].getContext('2d');
         // 高分屏放大
-        _devicePixelRatio != 1
-        && _ctxList['hover'].scale(
-            _devicePixelRatio, _devicePixelRatio
-        );
+        _devicePixelRatio !== 1
+        && _ctxList['hover'].scale(_devicePixelRatio, _devicePixelRatio);
     }
 
     /**
@@ -163,23 +170,17 @@ export default function Painter(root, storage, shape) {
                     ) {
                         if (catchBrushException) {
                             try {
-                                shape.get(e.shape).brush(
-                                    ctx, e, false, update
-                                );
+                                shape.get(e.shape).brush(ctx, e, false, update);
                             } catch (error) {
                                 logger.log(error, 'brush error of ' + e.shape, e);
                             }
                         } else {
                             var currentShape = shape.get(e.shape)
-                            currentShape.brush(
-                                ctx, e, false, update
-                            );
+                            currentShape.brush(ctx, e, false, update);
                         }
                     }
                 } else {
-                    logger.log(
-                        'can not find the specific zlevel canvas!'
-                    );
+                    logger.log('can not find the specific zlevel canvas!');
                 }
             }
         };
@@ -277,11 +278,13 @@ export default function Painter(root, storage, shape) {
 
     /**
      * 视图更新
-     * @param {Array} shapeList 需要更新的图形元素列表
-     * @param {Function} callback  视图更新后回调函数
+     * @param {Array} shapeList 需要更新的图形元素列表,
+     *                          不进入这个list的元素则不进行更新
+     * @param {Function} callback  视图更新后回调函数, 默认不传
      */
     function update(shapeList, callback) {
         var shape;
+        // 对shapeList中的每个形状, 在storage中更改其内容
         for (var i = 0, l = shapeList.length; i < l; i++) {
             shape = shapeList[i];
             storage.mod(shape.id, shape);
@@ -476,5 +479,7 @@ export default function Painter(root, storage, shape) {
     self.dispose = dispose;
     self.getDomHover = getDomHover;
     self.toDataURL = toDataURL;
+
+    // 调用初始化方法
     _init();
 }

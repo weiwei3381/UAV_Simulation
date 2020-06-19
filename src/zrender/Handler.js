@@ -1,4 +1,5 @@
 import eventTool from './tool/event'
+import Dispatcher from './tool/Dispatcher'
 import config from './config'
 
 /**
@@ -13,8 +14,8 @@ import config from './config'
 export default function Handler(root, storage, painter, shape) {
     //添加事件分发器特性
 
-    // 分发器的this强制绑定到Handle上
-    eventTool.Dispatcher.call(this);
+    // // 分发器的this强制绑定到Handle上
+    Dispatcher.call(this);
 
     var self = this;
 

@@ -228,6 +228,10 @@ export default function Storage(shape) {
         return self;
     }
 
+    /**
+     * 是否有高亮图层
+     * @returns {boolean}
+     */
     function hasHoverShape() {
         return _hoverElements.length > 0;
     }

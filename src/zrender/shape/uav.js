@@ -1,14 +1,10 @@
 /**
- * zrender
- * Copyright 2013 Baidu Inc. All rights reserved.
  *
- * @author Kener (@Kener-林峰, linzhifeng@baidu.com)
- *
- * shape类：圆
+ * shape类：无人机类
  * 可配图形属性：
  {
        // 基础属性
-       shape  : 'circle',       // 必须，shape类标识，需要显式指定
+       shape  : 'uav',          // 必须，shape类标识，需要显式指定
        id     : {string},       // 必须，图形唯一标识，可通过zrender实例方法newShapeId生成
        zlevel : {number},       // 默认为0，z层level，决定绘画在哪层canvas中
        invisible : {boolean},   // 默认为false，是否可见
@@ -75,18 +71,27 @@
 
 import base from './base'
 
-function Circle() {
-    this.type = 'circle';
+function UAV() {
+    this.type = 'uav';
 }
 
-Circle.prototype = {
+UAV.prototype = {
     /**
      * 创建圆形路径
      * @param {Context2D} ctx Canvas 2D上下文
      * @param {Object} style 样式
      */
     buildPath: function (ctx, style) {
-        ctx.arc(style.x, style.y, style.r, 0, Math.PI * 2, true);
+        // 无人机绘图底边宽
+        const w = style.w || 5
+        const frontP = [style.x, style.y+4/3*w]
+        const tailP1 = [style.x-1/2*w, style.y-2/3*w]
+        const tailP2 = [style.x+1/2*w, style.y-2/3*w]
+        ctx.moveTo(frontP[0],frontP[1])
+        ctx.lineTo(tailP1[0],tailP1[1])
+        ctx.lineTo(style.x,style.y)
+        ctx.lineTo(tailP2[0],tailP2[1])
+        ctx.lineTo(frontP[0],frontP[1])
         return;
     },
 
@@ -103,14 +108,14 @@ Circle.prototype = {
             lineWidth = 0;
         }
         return {
-            x: Math.round(style.x - style.r - lineWidth / 2),
-            y: Math.round(style.y - style.r - lineWidth / 2),
-            width: style.r * 2 + lineWidth,
-            height: style.r * 2 + lineWidth
+            x: Math.round(style.x - style.w - lineWidth / 2),
+            y: Math.round(style.y - style.w - lineWidth / 2),
+            width: style.w * 2 + lineWidth,
+            height: style.w * 2 + lineWidth
         };
     }
 };
 
-base.derive(Circle);
+base.derive(UAV);
 
-export default Circle;
+export default UAV;

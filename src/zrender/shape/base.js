@@ -599,7 +599,6 @@ self = {
     getHighlightZoom: getHighlightZoom,
     drift: drift,
     isCover: isCover,
-
     updateTransform: updateTransform
 };
 

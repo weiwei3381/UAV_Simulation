@@ -116,12 +116,18 @@ if (!document.createElement('canvas').getContext) {
   // Add namespaces and stylesheet at startup.
   addNamespacesAndStylesheet(document);
 
+  // 定义canvas管理器
   var G_vmlCanvasManager_ = {
+    // 初始化方法, 马上进行无参数调用
     init: function(opt_doc) {
       var doc = opt_doc || document;
       // Create a dummy element so that IE will allow canvas elements to be
       // recognized.
+      // 创建canvas元素
       doc.createElement('canvas');
+      // 给document上增加事件
+      // 只要 readyState 属性发生变化，就会调用init_函数。
+      // init_函数是找到所有的canvas元素,并执行initElement方法
       doc.attachEvent('onreadystatechange', bind(this.init_, this, doc));
     },
 

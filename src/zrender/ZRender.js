@@ -4,7 +4,7 @@ import util from './tool/util'
 import Storage from './Storage'
 import Painter from './Painter'
 import Handler from './Handler'
-import logger from './logger'
+import {logger} from './logger'
 
 /**
  * ZRender接口类，对外可用的所有接口都在这里！！
@@ -31,7 +31,7 @@ export default class ZRender {
 
     // 动画控制
     initAnimate() {
-        // 需要变动的形状集合
+        // 需要变动的形状集合, 不变动的形状则不进行更新
         this.animatingShapes = [];
         // stage是绘制类, 需要提供update接口
         this.animation = new Animation({

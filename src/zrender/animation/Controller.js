@@ -14,7 +14,7 @@
 import Easing from './easing'
 
 const Controller = function (options) {
-
+    // 目标池, 其实就是放改变目标的地方
     this._targetPool = options.target || {};
     if (this._targetPool.constructor != Array) {
         this._targetPool = [this._targetPool];

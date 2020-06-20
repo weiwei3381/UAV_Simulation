@@ -75,7 +75,7 @@ Animation.prototype = {
                 deferredCtls.push(controller);
             }
         }
-        // 调用stage的update方法
+        // 调用stage的update方法, 更新舞台
         if (this.stage && this.stage.update && this._controllerPool.length
         ) {
             this.stage.update();
@@ -125,7 +125,9 @@ Animation.prototype = {
     },
     // target是目标图形(shape或者属性), loop表示是否循环
     animate: function (target, loop, getter, setter) {
+        // 新生成一个deferred类, 只需要传变动的目标即可.
         var deferred = new Deferred(target, loop, getter, setter);
+        // 给defer增加animation示例, 以方便defer控制controller对象
         deferred.animation = this;
         return deferred;
     }

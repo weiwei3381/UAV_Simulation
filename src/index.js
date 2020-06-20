@@ -29,18 +29,7 @@ var uav = {
 }
 zr.addShape(uav)
 
-const zone = {
-    shape  : 'rectangle',
-    id     : '123456',
-    style  : {
-        x : 0,
-        y : 0,
-        width : 150,
-        height : 50,
-        color : '#eee',
-    },
-}
-
+// 网格列表
 const gridList = []
 for (let column =0; column<5;column++){
     for (let row = 0; row < 5; row ++){
@@ -49,8 +38,8 @@ for (let column =0; column<5;column++){
                 shape  : 'rectangle',
                 id     : zr.newShapeId(),
                 style  : {
-                    x : 0 + row * (width / 5),
-                    y : 0 + column * (height / 5),
+                    x : row * (width / 5),
+                    y : column * (height / 5),
                     width : width / 5,
                     height : height / 5,
                     color : zrColor.random(),

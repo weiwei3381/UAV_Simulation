@@ -31,6 +31,7 @@ Deferred.prototype = {
     // 使用when方法设置帧
     when: function (time /* ms */, props, easing) {
         for (var propName in props) {
+            // 判断在_tracks中是否存在, 如果不存在, 先记录初始状态
             if (!this._tracks[propName]) {
                 this._tracks[propName] = [];
                 // 初始状态, 并没有easing(缓动)属性
@@ -39,6 +40,7 @@ Deferred.prototype = {
                     value: this._getter(this._target, propName)
                 });
             }
+            // 增加关键帧情况
             this._tracks[propName].push({
                 time: time,
                 value: props[propName],
@@ -97,10 +99,11 @@ Deferred.prototype = {
                 continue;
             }
             for (var i = 0; i < track.length - 1; i++) {
-                var now = track[i],
-                    next = track[i + 1];
+                // 得到相邻两部分的状态
+                const now = track[i]
+                const next = track[i + 1]
 
-                var controller = new Controller({
+                const controller = new Controller({
                     target: self._target,
                     life: next.time - now.time,
                     delay: delay,
@@ -115,6 +118,8 @@ Deferred.prototype = {
                 this._controllerList.push(controller);
 
                 this._controllerCount++;
+                // delay是指对于多个_track的状态需要变化,
+                // controller要等待前面的执行完毕后才能执行
                 delay = next.time;
 
                 self.animation.add(controller);

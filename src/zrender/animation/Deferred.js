@@ -57,20 +57,18 @@ Deferred.prototype = {
         var track;
         var trackMaxTime;
 
+        // 通过参数, 创建创建onframe函数
+        // 如果是在运行中,处于onframe状态,则调用该方法的返回值
         function createOnframe(now, next, propName) {
             // 复制出新的数组，不然动画的时候改变数组的值也会影响到插值
             var prevValue = clone(now.value);
             var nextValue = clone(next.value);
             return function (target, schedule) {
-                _interpolate(
-                    prevValue,
-                    nextValue,
-                    schedule,
-                    target,
-                    propName,
-                    self._getter,
-                    self._setter
+                // 根据当前进度schedule, 插值设置目标形状的对应属性
+                _interpolate(prevValue, nextValue, schedule, target, propName,
+                    self._getter, self._setter
                 );
+                // 使用during方法, 可以将回调函数存入_onframeList中, 即可在此进行调用
                 for (var i = 0; i < self._onframeList.length; i++) {
                     self._onframeList[i](target, schedule);
                 }
@@ -159,6 +157,7 @@ function _defaultSetter(target, key, value) {
 function _interpolate(prevValue, nextValue, percent, target,
                       propName, getter, setter) {
     // 遍历数组做插值
+    // 会递归调用_interpolate方法, 将数组拆成单个, 然后走另外的分支
     if (prevValue instanceof Array && nextValue instanceof Array) {
         const minLen = Math.min(prevValue.length, nextValue.length);
         var largerArray;
@@ -190,7 +189,8 @@ function _interpolate(prevValue, nextValue, percent, target,
         }
 
         setter(target, propName, result);
-    } else {
+
+    } else {  // 如果不是数组, 就走这个分支
         prevValue = parseFloat(prevValue);
         nextValue = parseFloat(nextValue);
         if (!isNaN(prevValue) && !isNaN(nextValue)) {

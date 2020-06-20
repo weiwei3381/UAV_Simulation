@@ -59,15 +59,18 @@ Animation.prototype = {
         const cp = this._controllerPool;
         // 控制池大小
         let len = cp.length;
-        // 设置插值的位置的大小
+        // 插值的事件列表
         const deferredEvents = [];
+        // 差值事件对应的控制器列表
         const deferredCtls = [];
         for (let i = 0; i < len; i++) {
             const controller = cp[i];
-            // 根据当前时间获得控制器
+            // 根据当前时间调用控制器, 如果销毁destroy或者重新开始restart,则会返回e值,
+            // 否则e为null或者undifined
             const e = controller.step(time);
             // 需要在stage.update之后调用的事件，例如destroy
             if (e) {
+                // 发送事件, 事件为destroy或者restart
                 deferredEvents.push(e);
                 deferredCtls.push(controller);
             }

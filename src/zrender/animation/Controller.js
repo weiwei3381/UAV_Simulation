@@ -37,7 +37,7 @@ const Controller = function (options) {
     this.gap = options.gap || 0;
     // 缓动默认为线性
     this.easing = options.easing || 'Linear';
-
+    // 三种事件, 分别是运行中, 销毁, 循环重新运行
     this.onframe = options.onframe || null;
 
     this.ondestroy = options.ondestroy || null;
@@ -60,13 +60,14 @@ Controller.prototype = {
         var easingFunc = typeof (this.easing) == 'string'
             ? Easing[this.easing]
             : this.easing;
-        // 计划当前位置, 从0-1开始算
+        // 根据当前时间获得控制器的当前进度,例如0.3, 即运行30%进度
         var schedule;
         if (typeof easingFunc === 'function') {
             schedule = easingFunc(percent);
         } else {
             schedule = percent;
         }
+        // 发送onframe事件
         this.fire('frame', schedule);
 
         //结束
@@ -94,9 +95,15 @@ Controller.prototype = {
     fire: function (eventType, arg) {
         // 虽然预留了接口,可以根据不同的事件类型进行判断
         // 但是目前主要还是调用onframe函数,进行控制
+        // onframe事件, 表示已经开始运行, 有帧数
+        // ondestroy事件, 代表控制器需要销毁, 运行已经结束
+        // onrestart事件, 代表循环为真, 需要重新运行
+        // 上述三种事件都在Control()参数中传入
         for (var i = 0, len = this._targetPool.length; i < len; i++) {
             if (this['on' + eventType]) {
                 this['on' + eventType](this._targetPool[i], arg);
+                console.log(`调用${'on' + eventType}`)
+                console.log(this._targetPool[i])
             }
         }
     }
